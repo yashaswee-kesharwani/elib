@@ -4,7 +4,11 @@ import { config } from './config/config';
 import globalErrorHandler from './middlewares/globalErrorHandler';
 import userRouter from './user/userRouter';
 
+
+
 const app = express()
+
+app.use(express.json())
 app.get("/",(req,res,next)=> {
     const error = createHttpError(400, "Something went Wrong!");
     throw error;
