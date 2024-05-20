@@ -34,6 +34,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
 		config.jwtSecret as string,
 		{
 			expiresIn: "7d",
+			algorithm: "HS256"
 		}
 	);
 	res.json({
