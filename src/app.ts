@@ -3,7 +3,7 @@ import createHttpError, { HttpError } from 'http-errors';
 import { config } from './config/config';
 import globalErrorHandler from './middlewares/globalErrorHandler';
 import userRouter from './user/userRouter';
-
+import { query, validationResult, matchedData } from 'express-validator';
 
 
 const app = express()
