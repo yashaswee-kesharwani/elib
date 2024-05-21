@@ -29,6 +29,7 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
 	const hashedPassword = await bcrypt.hash(password, 10);
 
 	let newUser: User;
+	
 	try {
 		newUser = await userModel.create({
 			name,
@@ -58,4 +59,27 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
 	}
 	
 };
-export { createUser };
+
+const loginUser = async (req: Request, res: Response, next: NextFunction) => {
+	const {email, password} = req.body();
+	if (!email || !password) {
+		const error = createHttpError(401, "Some Fields cannot be empty");
+		return next(error);
+	}
+
+	try {
+		const user = await userModel.findOne({ email });
+		if (user?.$isEmpty) {
+			const error = createHttpError(400, "User does not exists.");
+			return next(error);
+		} else {
+			res.json({
+				message:"OK",
+			});
+		}
+	} catch (err) {
+		return next(createHttpError(500, "Error while fetching user"));
+	}
+
+}
+export { createUser, loginUser };
