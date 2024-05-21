@@ -34,6 +34,6 @@ bookRouter.get("/", listBook);
 
 bookRouter.get("/:bookId", getBook);
 
-bookRouter.post("/delete", deleteBook);
+bookRouter.delete("/:bookId", authenticate ,deleteBook);
 
 export default bookRouter;
