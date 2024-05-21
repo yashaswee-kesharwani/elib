@@ -51,31 +51,49 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
 				algorithm: "HS256",
 			}
 		);
-		res.json({
+		res.status(201).json({
 			accessToken: token,
 		});
 	} catch(err){
 		createHttpError(500,"Error while signing the jwt token");
 	}
-	
-};
+	};
 
 const loginUser = async (req: Request, res: Response, next: NextFunction) => {
-	const {email, password} = req.body();
+	const {email, password} = req.body;
 	if (!email || !password) {
 		const error = createHttpError(401, "Some Fields cannot be empty");
 		return next(error);
 	}
-
 	try {
 		const user = await userModel.findOne({ email });
-		if (user?.$isEmpty) {
-			const error = createHttpError(400, "User does not exists.");
-			return next(error);
+		if (user) {
+			const isMatch = await bcrypt.compare(password,user.password);
+			if(isMatch) {
+				try {
+					const token = sign(
+						{
+							sub: user._id,
+						},
+						config.jwtSecret as string,
+						{
+							expiresIn: "7d",
+							algorithm: "HS256",
+						}
+					);
+					res.status(201).json({
+						accessToken: token,
+					});
+				} catch(err){
+					createHttpError(500,"Error while signing the jwt token");
+				}
+			} else {
+				const error = createHttpError(400, "Username or password incorrect");
+				return next(error);
+			}
 		} else {
-			res.json({
-				message:"OK",
-			});
+			const error = createHttpError(404, "User Not Found");
+			return next(error);
 		}
 	} catch (err) {
 		return next(createHttpError(500, "Error while fetching user"));
