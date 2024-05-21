@@ -8,57 +8,70 @@ import { error } from "node:console";
 import createHttpError from "http-errors";
 
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
-	const { title, genre } = req.body;
-	const files = req.files as { [filename: string]: Express.Multer.File[] }; // Remember this line
-	const coverImageMimeType = files.coverImage[0].mimetype.split("/").at(-1);
-	const fileName = files.coverImage[0].filename;
-	const filePath = path.resolve(
-		__dirname,
-		"../../public/data/uploads",
-		fileName
-	);
-	const uploadResult = await cloudinary.uploader.upload(filePath, {
-		filename_override: fileName,
-		folder: "book-covers",
-		format: coverImageMimeType,
-	});
+	try {
+		const { title, genre } = req.body;
+		const files = req.files as { [filename: string]: Express.Multer.File[] }; // Remember this line
+		const coverImageMimeType = files.coverImage[0].mimetype.split("/").at(-1);
+		const fileName = files.coverImage[0].filename;
+		const filePath = path.resolve(
+			__dirname,
+			"../../public/data/uploads/",
+			fileName
+		);
+		const uploadResult = await cloudinary.uploader.upload(filePath, {
+			filename_override: fileName,
+			folder: "book-covers",
+			format: coverImageMimeType,
+		});
 
-	const bookMimeType = files.file[0].mimetype.split("/").at(-1);
-	const bookName = files.file[0].filename;
-	const bookPath = path.resolve(
-		__dirname,
-		"../../public/data/uploads",
-		bookName
-	);
-	const bookUploadResult = await cloudinary.uploader.upload(bookPath, {
-		resource_type: "raw",
-		filename_override: fileName,
-		folder: "book-pdfs",
-		format: bookMimeType,
-	});
-	// @ts-ignore
+		const bookMimeType = files.file[0].mimetype.split("/").at(-1);
+		const bookName = files.file[0].filename;
+		const bookPath = path.resolve(
+			__dirname,
+			"../../public/data/uploads/",
+			bookName
+		);
+		const bookUploadResult = await cloudinary.uploader.upload(bookPath, {
+			resource_type: "raw",
+			filename_override: fileName,
+			folder: "book-pdfs",
+			format: bookMimeType,
+		});
+		// @ts-ignore
 
-	const _req = req as AuthRequest;
-	const newBook = await bookModel.create({
-		title: title,
-		genre: genre,
-		author: _req.userId,
-		coverImage: uploadResult.secure_url,
-		file: bookUploadResult.secure_url,
-	});
+		const _req = req as AuthRequest;
+		const newBook = await bookModel.create({
+			title: title,
+			genre: genre,
+			author: _req.userId,
+			coverImage: uploadResult.secure_url,
+			file: bookUploadResult.secure_url,
+		});
 
-	await fs.promises.unlink(filePath);
-	await fs.promises.unlink(bookPath);
+		await fs.promises.unlink(filePath);
+		await fs.promises.unlink(bookPath);
 
-	res.status(201).json({
-		id: newBook._id,
-	});
+		res.status(201).json({
+			id: newBook._id,
+		});
+	} catch (err) {
+		res.json({ error: err });
+	}
 };
 const getBook = async (req: Request, res: Response, next: NextFunction) => {
 	res.json({});
 };
 const listBook = async (req: Request, res: Response, next: NextFunction) => {
-	res.json({});
+	try {
+		const book = await bookModel.find();
+		res.json({book});
+	} catch (err) {
+		return next(
+			createHttpError({
+				error: err,
+			})
+		);
+	}
 };
 const updateBook = async (req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -123,8 +136,7 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
 			},
 			{ new: true }
 		);
-		res.json({updateBook});
-
+		res.json({ updateBook });
 	} catch (err) {
 		res.json({ error: err });
 	}
